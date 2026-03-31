@@ -4,7 +4,7 @@ import numpy as np
 DEFAULT_URI = "ip:192.168.2.1"
 DEFAULT_SAMPLE_RATE = 2_500_000
 DEFAULT_RX_BUFFER_SIZE = 32768
-DEFUALT_TX_BUFFER_SIZE = 32768
+DEFAULT_TX_BUFFER_SIZE = 32768
 DEFAULT_RX_BANDWIDTH = DEFAULT_SAMPLE_RATE
 DEFAULT_TX_BANDWIDTH = DEFAULT_SAMPLE_RATE
 DEFAULT_RX_LO = 2_400_000_000
@@ -63,16 +63,16 @@ def configure_tx(
     if channel not in (0, 1):
         raise ValueError(f"Unsupported TX channel: {channel}")
     
-    sdr.tx_lo = center_freq
-    sdr.tx_rf_bandwidth = bandwidth
+    sdr.tx_lo = int(center_freq)
+    sdr.tx_rf_bandwidth = int(bandwidth)
     sdr.tx_cyclic_buffer = cyclic
     sdr.tx_enabled_channels = [channel]
-    sdr.tx_buffer_size = int(DEFUALT_TX_BUFFER_SIZE)
+    sdr.tx_buffer_size = int(DEFAULT_TX_BUFFER_SIZE)
     
     if channel == 0:
-        sdr.gain_control_mode_chan0 = attenuation
+        sdr.tx_hardwaregain_chan0 = attenuation
     elif channel == 1:
-        sdr.gain_control_mode_chan1 = attenuation
+        sdr.tx_hardwaregain_chan1 = attenuation
 
 
 def receive_samples(sdr: adi.Pluto) -> np.ndarray:
