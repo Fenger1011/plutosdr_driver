@@ -10,6 +10,7 @@ DEFAULT_TX_BANDWIDTH = DEFAULT_SAMPLE_RATE
 DEFAULT_RX_LO = 2_400_000_000
 DEFAULT_TX_LO = 2_400_000_000
 DEFAULT_RX_GAIN_MODE = "slow_attack"
+DEFAULT_RX_GAIN = 10
 DEFAULT_RX_CHANNEL = 0
 DEFAULT_TX_CHANNEL = 0
 DEFAULT_CYCLIC_TX = False
@@ -18,7 +19,7 @@ DEFAULT_TX_ATTENUATION = -10
 
 def create_pluto(uri: str = DEFAULT_URI, sample_rate: int = DEFAULT_SAMPLE_RATE) -> adi.Pluto:
     try:
-        sdr = adi.Pluto(uri=uri)
+        sdr = adi.ad9361(uri=uri)
     except Exception as e:
         raise RuntimeError(f"Could not connect to PlutoSDR at {uri}: {e}") from e
 
@@ -27,13 +28,14 @@ def create_pluto(uri: str = DEFAULT_URI, sample_rate: int = DEFAULT_SAMPLE_RATE)
 
 
 def configure_rx(
-    sdr: adi.Pluto,
+    sdr: adi.ad9361,
     center_freq: int = DEFAULT_RX_LO,
     bandwidth: int = DEFAULT_RX_BANDWIDTH,
     buffer_size: int = DEFAULT_RX_BUFFER_SIZE,
     gain_mode: str = DEFAULT_RX_GAIN_MODE,
+    gain: int = DEFAULT_RX_GAIN,
     channel: int = DEFAULT_RX_CHANNEL,
-) -> adi.Pluto:
+) -> adi.ad9361:
     channel = int(channel)
     if channel not in (0, 1):
         raise ValueError(f"Unsupported RX channel: {channel}")
@@ -45,20 +47,22 @@ def configure_rx(
 
     if channel == 0:
         sdr.gain_control_mode_chan0 = gain_mode
+        sdr.rx_hardwaregain_chan0 = gain
     elif channel == 1:
         sdr.gain_control_mode_chan1 = gain_mode
+        sdr.rx_hardwaregain_chan1 = gain
 
     return sdr
 
 def configure_tx(
-        sdr: adi.Pluto,
-        center_freq: int = DEFAULT_RX_LO,
+        sdr: adi.ad9361,
+        center_freq: int = DEFAULT_TX_LO,
         bandwidth: int = DEFAULT_TX_BANDWIDTH,
-        buffer_size: int = DEFAULT_TX_BANDWIDTH,
+        buffer_size: int = DEFAULT_TX_BUFFER_SIZE,
         cyclic: bool = DEFAULT_CYCLIC_TX,
         attenuation: int = DEFAULT_TX_ATTENUATION,
         channel: int = DEFAULT_TX_CHANNEL,
-) -> adi.Pluto:
+) -> adi.ad9361:
     channel = int(channel)
     if channel not in (0, 1):
         raise ValueError(f"Unsupported TX channel: {channel}")
@@ -67,14 +71,18 @@ def configure_tx(
     sdr.tx_rf_bandwidth = int(bandwidth)
     sdr.tx_cyclic_buffer = cyclic
     sdr.tx_enabled_channels = [channel]
-    sdr.tx_buffer_size = int(DEFAULT_TX_BUFFER_SIZE)
+    sdr.tx_buffer_size = int(buffer_size)
     
     if channel == 0:
         sdr.tx_hardwaregain_chan0 = attenuation
     elif channel == 1:
         sdr.tx_hardwaregain_chan1 = attenuation
 
+    return sdr
 
-def receive_samples(sdr: adi.Pluto) -> np.ndarray:
-    """Return complex IQ samples from the currently configured RX path."""
+
+def receive_samples(sdr: adi.ad9361, buffer_size = DEFAULT_RX_BUFFER_SIZE) -> np.ndarray:
+    """Return complex IQ samples from the RX path."""
+    sdr.rx_buffer_size = buffer_size    # Makes it possible to change the buffer size
+
     return np.asarray(sdr.rx())
