@@ -19,7 +19,7 @@ DEFAULT_TX_ATTENUATION = -10
 
 def create_pluto(uri: str = DEFAULT_URI, sample_rate: int = DEFAULT_SAMPLE_RATE) -> adi.Pluto:
     try:
-        sdr = adi.ad9361(uri=uri)
+        sdr = adi.Pluto(uri=uri)
     except Exception as e:
         raise RuntimeError(f"Could not connect to PlutoSDR at {uri}: {e}") from e
 
@@ -28,14 +28,14 @@ def create_pluto(uri: str = DEFAULT_URI, sample_rate: int = DEFAULT_SAMPLE_RATE)
 
 
 def configure_rx(
-    sdr: adi.ad9361,
+    sdr: adi.Pluto,
     center_freq: int = DEFAULT_RX_LO,
     bandwidth: int = DEFAULT_RX_BANDWIDTH,
     buffer_size: int = DEFAULT_RX_BUFFER_SIZE,
     gain_mode: str = DEFAULT_RX_GAIN_MODE,
     gain: int = DEFAULT_RX_GAIN,
     channel: int = DEFAULT_RX_CHANNEL,
-) -> adi.ad9361:
+) -> adi.Pluto:
     channel = int(channel)
     if channel not in (0, 1):
         raise ValueError(f"Unsupported RX channel: {channel}")
@@ -55,14 +55,14 @@ def configure_rx(
     return sdr
 
 def configure_tx(
-        sdr: adi.ad9361,
+        sdr: adi.Pluto,
         center_freq: int = DEFAULT_TX_LO,
         bandwidth: int = DEFAULT_TX_BANDWIDTH,
         buffer_size: int = DEFAULT_TX_BUFFER_SIZE,
         cyclic: bool = DEFAULT_CYCLIC_TX,
         attenuation: int = DEFAULT_TX_ATTENUATION,
         channel: int = DEFAULT_TX_CHANNEL,
-) -> adi.ad9361:
+) -> adi.Pluto:
     channel = int(channel)
     if channel not in (0, 1):
         raise ValueError(f"Unsupported TX channel: {channel}")
@@ -81,8 +81,24 @@ def configure_tx(
     return sdr
 
 
-def receive_samples(sdr: adi.ad9361, buffer_size = DEFAULT_RX_BUFFER_SIZE) -> np.ndarray:
+def receive_samples(sdr: adi.Pluto, buffer_size = DEFAULT_RX_BUFFER_SIZE) -> np.ndarray:
     """Return complex IQ samples from the RX path."""
     sdr.rx_buffer_size = buffer_size    # Makes it possible to change the buffer size
 
     return np.asarray(sdr.rx())
+
+def print_pluto_config(sdr):
+    print("\n=== SDR CONFIG ===")
+
+    print(
+        f"TX: ch={sdr.tx_enabled_channels}, LO={sdr.tx_lo}, "
+        f"BW={sdr.tx_rf_bandwidth}, cyclic={sdr.tx_cyclic_buffer}, "
+        f"buf={sdr.tx_buffer_size}, gain={sdr.tx_hardwaregain_chan0}"
+    )
+
+    print(
+        f"RX: ch={sdr.rx_enabled_channels}, LO={sdr.rx_lo}, "
+        f"BW={sdr.rx_rf_bandwidth}, buf={sdr.rx_buffer_size}, "
+        f"gain={sdr.rx_hardwaregain_chan0}, mode={sdr.gain_control_mode_chan0}"
+    )
+
