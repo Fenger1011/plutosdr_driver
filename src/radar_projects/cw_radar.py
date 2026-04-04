@@ -1,6 +1,14 @@
+import os
+import sys
+
 import matplotlib
-matplotlib.use("TkAgg")
-from matplotlib.ticker import FuncFormatter
+#matplotlib.use("TkAgg")
+#from matplotlib.ticker import FuncFormatter
+
+# Ensure the src package root is on sys.path when running this file directly.
+package_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if package_root not in sys.path:
+    sys.path.insert(0, package_root)
 
 import time
 import numpy as np
@@ -11,7 +19,7 @@ from driver.plots import *
 from driver.signal_processing import *
 
 
-# ======== PLUTO PARAMETERS =========
+# ====================== PLUTO PARAMETERS ======================
 uri = "ip:192.168.2.1"
 
 fs = 100_000   
@@ -34,21 +42,10 @@ tx_bandwidth = fs
 # We want an effective sampling rate of 16.240 kS/s
 fs_out = 16_240
 N_fft = 4096
-rx_buffer_size = int(np.ceil(N_fft * fs / fs_out))  # Sets RX buffer to correct
-print(rx_buffer_size)
+rx_buffer_size = int(np.ceil(N_fft * fs / fs_out))  # Sets RX buffer to correct length for FFT size
 
-
-
-tx_attenuation = -10
-
-
-
-
-
-
-
-# ======== SETUP HARDWARE ==========
-sdr = create_pluto(uri=uri, fs=fs)
+# ====================== SETUP HARDWARE ======================
+sdr = create_pluto(uri=uri, sample_rate=fs)
 
 configure_rx(
     sdr=sdr,
@@ -69,16 +66,20 @@ configure_tx(
     channel=tx_channel,
 )
 
-# ============ CREATE SIGNAL & TX ============
-iq_tx = make_tone(fs=fs, tone_hz=1e6, amplitude=2**1)
-#iq_tx = make_chirp(fs=fs, f0=-2e6, f1=2e6, n=2**10)
+# ====================== CREATE SIGNAL ======================
+tone_freq = fs/10 # 10kHz
+iq_tx = make_tone(fs=fs, tone_hz=tone_freq, amplitude=2**1)
 
+plot_iq_time(iq_tx, fs=fs)
+
+
+# ====================== TX ======================
 sdr.tx_destroy_buffer()
 sdr.tx(iq_tx)
 
 print_pluto_config(sdr)
 
-# ============ MAIN LOOP =============
+# ====================== MAIN LOOP ======================
 def main():
     
 

@@ -78,5 +78,3 @@ def plot_s11(filepath, label=None, figsize=(10, 5)):
     return freq_hz, s11
 
 
-path = "/home/fenger/pluto/plutosdr_driver/data/s_params/LOGANTRESFULL.s1p"
-freq_hz, s11 = plot_s11(path, label="Antenna S11")
