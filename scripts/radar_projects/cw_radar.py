@@ -7,16 +7,8 @@ import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
 
-# Ensure the src package root is on sys.path when running this file directly.
-package_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if package_root not in sys.path:
-    sys.path.insert(0, package_root)
-
 # Driver imports
-from driver.hardware_setup import *
-from driver.waveforms import *
-from driver.plots import *
-from driver.signal_processing import *
+from plutosdr_driver import *
 
 
 # ====================== PLUTO PARAMETERS ======================
@@ -125,6 +117,7 @@ def main():
 
     # Full log file path
     log_filename = os.path.join(log_dir, "doppler_log.csv")
+    print(f"Logging to: {log_filename}")
     file_exists = os.path.exists(log_filename)
     log_file = open(log_filename, "a", buffering=1)  # line-buffered
 

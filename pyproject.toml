@@ -1,15 +1,17 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "plutosdr-driver"
 version = "0.1.0"
-description = "Python driver helpers for PlutoSDR"
+description = "Reusable PlutoSDR driver and signal processing utilities"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
+    "scipy",
+    "matplotlib",
     "pyadi-iio",
 ]
 

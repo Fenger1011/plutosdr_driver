@@ -1,3 +1,8 @@
-# Driver for Pluto SDR
-Can initialize, transmit and receive using the Pluto SDR. 
-Work in progress.
+# PlutoSDR Driver
+
+Reusable PlutoSDR helper package for hardware setup, signal processing, and CW radar experiments.
+
+## Install
+
+```bash
+pip install -e .
