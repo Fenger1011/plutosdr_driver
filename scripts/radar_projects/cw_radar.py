@@ -1,13 +1,13 @@
 import os
-import sys
-import time
+import matplotlib
+matplotlib.use("QtAgg")
 from datetime import datetime
 
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
 
-# Driver imports
+# Import driver
 from plutosdr_driver import *
 
 
@@ -108,19 +108,25 @@ def main():
     bg_alpha = 0.98
     warmup_frames = 15
 
-    # Logging setup -> Saves in \plots
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    log_dir = os.path.join(base_dir, "script_outputs")
+    # Logging setup -> Saves in /plots
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    log_dir = os.path.join(base_dir, "plots")
 
     # Ensure folder exists
     os.makedirs(log_dir, exist_ok=True)
 
     # Full log file path
     log_filename = os.path.join(log_dir, "doppler_log.csv")
-    print(f"Logging to: {log_filename}")
-    file_exists = os.path.exists(log_filename)
-    log_file = open(log_filename, "a", buffering=1)  # line-buffered
 
+    print(f"Logging to: {log_filename}")
+
+    # Check if file exists BEFORE opening
+    file_exists = os.path.exists(log_filename)
+
+    # Open file
+    log_file = open(log_filename, "a", buffering=1)
+
+    # Write header if new or empty
     if not file_exists or os.path.getsize(log_filename) == 0:
         log_file.write("timestamp,f_peak_hz,velocity_m_s,velocity_kmh,snr_db\n")
 

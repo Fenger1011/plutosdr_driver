@@ -12,6 +12,7 @@ dependencies = [
     "numpy",
     "scipy",
     "matplotlib",
+    "pyside6",
     "pyadi-iio",
 ]
 
