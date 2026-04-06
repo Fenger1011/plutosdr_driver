@@ -110,7 +110,7 @@ def main():
 
     # Logging setup -> Saves in \plots
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    log_dir = os.path.join(base_dir, "plots")
+    log_dir = os.path.join(base_dir, "script_outputs")
 
     # Ensure folder exists
     os.makedirs(log_dir, exist_ok=True)
