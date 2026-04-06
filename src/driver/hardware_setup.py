@@ -17,25 +17,20 @@ DEFAULT_CYCLIC_TX = False
 DEFAULT_TX_ATTENUATION = -10
 
 
-def create_pluto(
-    uri: str = DEFAULT_URI,
-    sample_rate: int | None = None,
-    fs: int | None = None,
-) -> adi.Pluto:
-    if fs is not None:
-        if sample_rate is not None:
-            raise TypeError("create_pluto() got both sample_rate and fs")
-        sample_rate = fs
-
-    if sample_rate is None:
-        sample_rate = DEFAULT_SAMPLE_RATE
-
+def create_pluto(uri: str = DEFAULT_URI, sample_rate: int = DEFAULT_SAMPLE_RATE) -> adi.Pluto:
     try:
         sdr = adi.Pluto(uri=uri)
     except Exception as e:
         raise RuntimeError(f"Could not connect to PlutoSDR at {uri}: {e}") from e
 
     sdr.sample_rate = int(sample_rate)
+
+    # Reduce RX latency
+    try:
+        sdr._rxadc.set_kernel_buffers_count(1)
+    except Exception as e:
+        print(f"Warning: could not set RX kernel buffers to 1: {e}")
+
     return sdr
 
 

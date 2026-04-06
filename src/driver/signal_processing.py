@@ -1,28 +1,16 @@
 import numpy as np
 
-def range_from_samples(rx_samples, tx_samples, sample_rate, bandwidth, chirp_duration):
-    c = 3e8
-    slope = bandwidth / chirp_duration
 
-    # Dechirp / mix down
-    beat = rx_samples * np.conj(tx_samples)
+def compute_fft_dbfs(rx_samples, ts):
+    num_samples = len(rx_samples)
 
-    # Window
-    win = np.hamming(len(beat))
-    beat_win = beat * win
+    win = np.hamming(num_samples)
+    y = rx_samples * win    # Apply Hamming window
 
-    # FFT
-    sp = np.fft.fft(beat_win)
-    sp = np.fft.fftshift(sp)
-    mag = np.abs(sp)
+    X = np.fft.fftshift(np.fft.fft(y))  # Computes symmettric FFT
+    xf = np.fft.fftshift(np.fft.fftfreq(num_samples, d=ts)) # Create freq. axis
 
-    freq = np.fft.fftfreq(len(beat), d=1/sample_rate)
-    freq = np.fft.fftshift(freq)
+    s_mag = np.abs(X) / (np.sum(win) / 2)   # Magnitude + scaling
+    s_dbfs = 20 * np.log10(np.maximum(s_mag / (2**12), 1e-15))  # Convert magnitude of dBFS --> Signal strength relative to ADC scale
 
-    # Peak beat frequency
-    peak_idx = np.argmax(mag)
-    f_b = abs(freq[peak_idx])
-
-    # Range
-    R = c * f_b / (2 * slope)
-    return R, f_b, freq, mag
+    return xf, s_dbfs   # Return freq. scale and magnitude
