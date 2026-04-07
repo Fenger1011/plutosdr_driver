@@ -73,7 +73,6 @@ configure_tx(
     channel=tx_channel,
 )
 
-
 # ====================== CREATE SIGNAL ======================
 iq_tx = (2**14) * np.ones(4096, dtype=np.complex64)  # Constant complex baseband signal
 
@@ -91,6 +90,23 @@ print(f"FFT frame length:     {N_fft} samples")
 print(f"Overlap:              {overlap_len} samples ({overlap_frac*100:.0f}%)")
 print(f"Hop length:           {hop_len} samples")
 
+remove_clutter = True
+K = 10 # Number of frames
+window = np.hanning(N_fft)
+
+if remove_clutter:
+    background = np.zeros(N_fft, dtype=np.complex128)
+
+    for k in range(K):
+        rx = sdr.rx()
+        if isinstance(rx, (list, tuple)):
+            rx = rx[0]
+        x = rx
+        X = np.fft.fftshift(np.fft.fft(x * window))
+        background += X
+        print("Running Static Scan")
+    X_clutter = background / K
+   
 
 # ====================== MAIN LOOP ======================
 def main():
@@ -171,6 +187,7 @@ def main():
     fig.tight_layout()
     fig.canvas.draw()
     fig.canvas.flush_events()
+    bg_power = None
 
     try:
         while True:
@@ -206,16 +223,33 @@ def main():
 
             fft_history = frame[-overlap_len:].copy()
 
-            # Compute FFT
-            xf, s_dbfs = compute_fft_dbfs(rx_samples=frame, ts=ts_decim_actual)
+            # --- FFT (complex) ---
+            X_raw = np.fft.fftshift(np.fft.fft(frame * window))
 
-            # Background estimate
-            if bg_db is None:
-                bg_db = s_dbfs.copy()
+            # --- FD toggle ---
+            if remove_clutter:
+                X_used = X_raw - X_clutter
             else:
-                bg_db = bg_alpha * bg_db + (1.0 - bg_alpha) * s_dbfs
+                X_used = X_raw
 
+            # --- Power ---
+            power = np.abs(X_used)**2
+
+            # --- EMA background (linear domain) ---
+            if bg_power is None:
+                bg_power = power.copy()
+            else:
+                bg_power = bg_alpha * bg_power + (1.0 - bg_alpha) * power
+
+            # --- Convert to dB ---
+            s_dbfs = 10 * np.log10(power + 1e-12)
+            bg_db  = 10 * np.log10(bg_power + 1e-12)
+
+            # --- Detection signal ---
             s_det = s_dbfs - bg_db
+
+            # --- Frequency axis ---
+            xf = np.fft.fftshift(np.fft.fftfreq(N_fft, ts_decim_actual))
             frame_counter += 1
 
             # Search area only outside guard band and within desired range
