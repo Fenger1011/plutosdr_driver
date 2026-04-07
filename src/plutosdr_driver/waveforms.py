@@ -31,8 +31,6 @@ def make_tone(fs, tone_hz, amplitude=2**14, n=None):
     return iq.astype(np.complex64)
 
 
-import numpy as np
-
 def make_chirp(fs, f0, f1, n, amplitude=2**14):
     """
     Generate a complex linear chirp with fixed number of samples.
@@ -56,21 +54,3 @@ def make_chirp(fs, f0, f1, n, amplitude=2**14):
 
     iq = amplitude * np.exp(1j * phase)
     return iq.astype(np.complex64)
-
-
-def make_pulsed_tone(fs, tone_hz, prf, pulse_width, num_pri, amplitude=2**14):
-    samples_per_pri = int(fs / prf)
-    pulse_samples = int(fs * pulse_width)
-
-    if pulse_samples > samples_per_pri:
-        raise ValueError("pulse_width must be <= PRI")
-
-    total_samples = samples_per_pri * num_pri
-    n = np.arange(total_samples)
-    t = n / fs
-
-    tone = np.exp(1j * 2 * np.pi * tone_hz * t)
-    gate = ((n % samples_per_pri) < pulse_samples).astype(np.float32)
-
-    iq = amplitude * tone * gate
-    return iq.astype(np.complex64), gate, samples_per_pri, pulse_samples
